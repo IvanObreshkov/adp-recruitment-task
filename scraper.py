@@ -34,20 +34,22 @@ def generate_id(start_urls: list):
         id_of_article = id_of_article + 1
         print(id_of_article)
 
+
 def connect_db():
     con = sqlite3.connect("articles.db")
     cursor = con.cursor()
     create_table(con, cursor)
     return con, cursor
 
+
 def create_table(con, cursor):
     sql_create_tasks_table = """CREATE TABLE IF NOT EXISTS article (
                                             item_id integer PRIMARY KEY,
-                                            url text NOT NULL,
-                                            article_date text NOT NULL,
-                                            labels text NOT NULL,
-                                            links text integer NOT NULL,
-                                            body TEXT NOT NULL
+                                            url text  unique NULL,
+                                            article_date text unique NOT NULL,
+                                            labels text unique NOT NULL,
+                                            links text integer unique  NOT NULL,
+                                            body TEXT unique NOT NULL
                                         );"""
 
     try:
@@ -55,6 +57,7 @@ def create_table(con, cursor):
         con.commit()
     except Exception as e:
         print(e)
+
 
 class BlogSpider(scrapy.Spider):
     name = 'blogspider'
@@ -85,8 +88,6 @@ class BlogSpider(scrapy.Spider):
 
     con, cursor = connect_db()
 
-
-
     def parse(self, response):
         article_labels: list = clear_html_tags(
             response.xpath('//ul[contains(@class, "menu menu--labels")]//li//div').getall())
@@ -108,6 +109,10 @@ class BlogSpider(scrapy.Spider):
             "links": str(article_links),
             "body": paragraphs
         }
-
-        self.cursor.execute("INSERT INTO article (item_id, url, article_date, labels, links, body) VALUES (:item_id, :url, :article_date, :labels, :links, :body)", schema)
-        self.con.commit()
+        try:
+            self.cursor.execute(
+                "INSERT INTO article (item_id, url, article_date, labels, links, body) VALUES (:item_id, :url, :article_date, :labels, :links, :body)",
+                schema)
+            self.con.commit()
+        except:
+            print("No duplicates allowed")
