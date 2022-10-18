@@ -28,25 +28,31 @@ def get_all_articles():
 
 
 # Get articles with same label
-@app.get("/articles/{label}")
+@app.get("/articles/")
 def get_all_with_label(label: str):
     sql_query = f"SELECT * FROM article WHERE labels LIKE '%{label}%'"
     _, cursor = connect_db(row=True)
     cursor.execute(sql_query)
-    result = cursor.fetchone()
+    result = cursor.fetchall()
     if not result:
         return JSONResponse(status_code=404, content=jsonable_encoder({"message": "Such article could not be found!"}))
     return JSONResponse(content=jsonable_encoder({"article": result}))
 
 
 # Get article by date
-@app.get("/articles/")
+@app.get("/article/")
 def get_article_with_date(date: str):
-    return
+    sql_query = f"SELECT * FROM article WHERE article_date LIKE '%{date}%'"
+    _, cursor = connect_db(row=True)
+    cursor.execute(sql_query)
+    result = cursor.fetchall()
+    if not result:
+        return JSONResponse(status_code=404, content=jsonable_encoder({"message": "Such article could not be found!"}))
+    return JSONResponse(content=jsonable_encoder({"article": result}))
 
 
 # Get single article by id
-@app.get("/articles/{article_id}")
+@app.get("/article/{article_id}")
 def get_article(article_id: int):
     sql_query = f"SELECT * FROM article WHERE item_id = {article_id}"
     con, cursor = connect_db(row=True)
@@ -60,7 +66,12 @@ def get_article(article_id: int):
 # Delete article by id
 @app.delete("/article/{article_id}")
 def delete_article(article_id):
-    return article_id
+    sql_query = f"DELETE FROM article WHERE item_id = {article_id}"
+    con, cursor = connect_db(row=True)
+    cursor.execute(sql_query)
+    con.commit()
+    result = cursor.fetchall()
+    return JSONResponse(content=jsonable_encoder({"article": result}))
 
 
 @app.put("/article/{article_id}")
