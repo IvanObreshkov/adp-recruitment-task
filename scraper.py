@@ -2,14 +2,14 @@ import scrapy, w3lib, re, typing, json
 from datetime import datetime
 import sqlite3
 
-
+# Remove html tags
 def clear_html_tags(scraped_list: list) -> list:
     for index, item in enumerate(scraped_list):
         scraped_list[index] = w3lib.html.remove_tags(item.replace('\xa0', ' '))
 
     return scraped_list
 
-
+# Construct paragraphs without html tags
 def build_paragraph(scraped_list: list) -> str:
     paragraph = ""
     for item in scraped_list:
@@ -17,7 +17,7 @@ def build_paragraph(scraped_list: list) -> str:
 
     return paragraph[1:]
 
-
+# Get date from article and return it in a proper format
 def format_date(scraped_date: list) -> str:
     date = ""
     for item in scraped_date:
@@ -27,21 +27,17 @@ def format_date(scraped_date: list) -> str:
     date = formatted_date.strftime('%Y-%m-%d')
     return date
 
-
-def generate_id(start_urls: list):
-    id_of_article = 0
-    for articles in start_urls:
-        id_of_article = id_of_article + 1
-        print(id_of_article)
-
-
-def connect_db():
+# Connect to SQLite Database
+def connect_db(**kwargs):
     con = sqlite3.connect("articles.db")
+    if "row" in kwargs.keys() and kwargs["row"] == True:
+        con.row_factory = sqlite3.Row
+
     cursor = con.cursor()
     create_table(con, cursor)
     return con, cursor
 
-
+# Create table to store articles
 def create_table(con, cursor):
     sql_create_tasks_table = """CREATE TABLE IF NOT EXISTS article (
                                             item_id integer PRIMARY KEY,
