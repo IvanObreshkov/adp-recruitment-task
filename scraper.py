@@ -45,7 +45,7 @@ def connect_db():
 def create_table(con, cursor):
     sql_create_tasks_table = """CREATE TABLE IF NOT EXISTS article (
                                             item_id integer PRIMARY KEY,
-                                            url text  unique NULL,
+                                            url text unique NULL,
                                             article_date text unique NOT NULL,
                                             labels text unique NOT NULL,
                                             links text integer unique  NOT NULL,
