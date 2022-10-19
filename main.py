@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from scraper import connect_db
+from jsonschema import FormatChecker, validate
 import sqlite3
 import json
 
@@ -78,9 +79,25 @@ def delete_article(article_id):
 @app.put("/article/{article_id}")
 async def update_article(article_id, request: Request):
     json_data = await request.json()
-    # verify json data
-    # if data is ok
-    # do sql query update article if article_id exists and return message on success
-    # if not return appropriate res code and message
+    SCHEMA = {
+        'article': {
+            'item_id': {'type': 'string'},
+            'url': {'type': 'string',
+                    'pattern': "^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$"},
+            'article_date': {'type': 'string', 'pattern': "^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$"},
+            'labels': {'type': 'string', 'pattern': "^["},
+            'links': {'type': 'string',
+                      'pattern': "^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$"},
+            'body': {'type': 'string'}
+        }
+    }
 
+    try:
+        val_response = validate(json_data, SCHEMA)
+        print(val_response)
+    except Exception as e:
+        return JSONResponse(status_code=400, content=jsonable_encoder({"message": "not valid data format"}))
+
+    # TO-DO
+    # Do a query to update a whole article
     return JSONResponse(content=jsonable_encoder({"data": json_data}))
