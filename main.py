@@ -70,8 +70,9 @@ def delete_article(article_id):
     con, cursor = connect_db(row=True)
     cursor.execute(sql_query)
     con.commit()
-    result = cursor.fetchall()
-    return JSONResponse(content=jsonable_encoder({"article": result}))
+    if (int(article_id) >= 1 and int(article_id) <= 20):
+        return JSONResponse(content=jsonable_encoder({"message": "article deleted successfully"}))
+    return JSONResponse(status_code=404, content=jsonable_encoder({"message": "Such article could not be found!"}))
 
 
 @app.put("/article/{article_id}")
