@@ -85,8 +85,6 @@ class BlogSpider(scrapy.Spider):
                   'https://nbs.sk/en/news/the-european-systemic-risk-board-issues-a-warning-to-slovakia-on-vulnerabilities-in-the-residential-real-estate-sector/'
                   ]
 
-    article_id: int = 0
-
     con, cursor = connect_db()
 
     def parse(self, response):
@@ -100,15 +98,15 @@ class BlogSpider(scrapy.Spider):
         article_links: list = re.findall(
             "(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})",
             paragraphs)
-        self.article_id = self.article_id + 1
 
         schema = {
-            "url": self.start_urls[self.article_id - 1],
+            "url": response.request.url,
             "article_date": date,
             "labels": str(article_labels),
             "links": str(article_links),
             "body": paragraphs
         }
+
         try:
             # Checks if a new article's body matches the body of an existing article in the db
 
@@ -124,3 +122,4 @@ class BlogSpider(scrapy.Spider):
                 print("Duplicate are not allowed")
         except Exception as e:
             print(e)
+
