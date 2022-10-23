@@ -7,6 +7,20 @@ import sqlite3
 import json
 
 app = FastAPI()
+def generateUpdateQuery(json_data, article_id):
+    sql_query_start = "UPDATE article SET"
+    sql_query_end = f" WHERE item_id = {article_id}"
+
+    for key, value in json_data.items():
+        if isinstance(value, (list,)):
+            value_to_str = str(value).replace("'", "")
+            sql_query_start += f" {key} = '{value_to_str}',"
+        else:
+            sql_query_start += f" {key} = '{value}',"
+
+    sql_query_start = sql_query_start[:-1]
+    sql_query_start += sql_query_end
+    return sql_query_start
 
 
 @app.get("/")
@@ -67,37 +81,38 @@ def get_article(article_id: int):
 # Delete article by id
 @app.delete("/article/{article_id}")
 def delete_article(article_id):
-    sql_query = f"DELETE FROM article WHERE item_id = {article_id}"
     con, cursor = connect_db(row=True)
+    cursor.execute(f"SELECT * FROM article WHERE item_id = {article_id}")
+    result = cursor.fetchone()
+    if not result:
+        return JSONResponse(status_code=404, content=jsonable_encoder({"message": "Such article could not be found!"}))
+    sql_query = f"DELETE FROM article WHERE item_id = {article_id}"
     cursor.execute(sql_query)
     con.commit()
-    if (int(article_id) >= 1 and int(article_id) <= 20):
-        return JSONResponse(content=jsonable_encoder({"message": "article deleted successfully"}))
-    return JSONResponse(status_code=404, content=jsonable_encoder({"message": "Such article could not be found!"}))
+    return JSONResponse(content=jsonable_encoder({"message": "article deleted successfully"}))
 
 
 @app.put("/article/{article_id}")
 async def update_article(article_id, request: Request):
     json_data = await request.json()
     SCHEMA = {
-        'article': {
-            'item_id': {'type': 'string'},
+        'properties': {
             'url': {'type': 'string',
                     'pattern': "^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$"},
             'article_date': {'type': 'string', 'pattern': "^\d{4}\-(0[1-9]|1[012])\-(0[1-9]|[12][0-9]|3[01])$"},
-            'labels': {'type': 'string', 'pattern': "^["},
-            'links': {'type': 'string',
+            'labels': {'type': 'array', 'pattern': "^["},
+            'links': {'type': 'array',
                       'pattern': "^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$"},
             'body': {'type': 'string'}
-        }
+        },
+        'additionalProperties': False
     }
-
     try:
-        val_response = validate(json_data, SCHEMA)
-        print(val_response)
+        validate(json_data, SCHEMA)
     except Exception as e:
         return JSONResponse(status_code=400, content=jsonable_encoder({"message": "not valid data format"}))
 
-    # TO-DO
-    # Do a query to update a whole article
-    return JSONResponse(content=jsonable_encoder({"data": json_data}))
+    con, cursor = connect_db()
+    cursor.execute(generateUpdateQuery(json_data, article_id))
+    con.commit()
+    return JSONResponse(content=jsonable_encoder({"message": "Article has been updated"}))
