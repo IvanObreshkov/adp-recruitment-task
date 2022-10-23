@@ -2,12 +2,14 @@ import scrapy, w3lib, re, typing, json
 from datetime import datetime
 import sqlite3
 
+
 # Remove html tags
 def clear_html_tags(scraped_list: list) -> list:
     for index, item in enumerate(scraped_list):
         scraped_list[index] = w3lib.html.remove_tags(item.replace('\xa0', ' '))
 
     return scraped_list
+
 
 # Construct paragraphs without html tags
 def build_paragraph(scraped_list: list) -> str:
@@ -16,6 +18,7 @@ def build_paragraph(scraped_list: list) -> str:
         paragraph += " " + item
 
     return paragraph[1:]
+
 
 # Get date from article and return it in a proper format
 def format_date(scraped_date: list) -> str:
@@ -27,6 +30,7 @@ def format_date(scraped_date: list) -> str:
     date = formatted_date.strftime('%Y-%m-%d')
     return date
 
+
 # Connect to SQLite Database
 def connect_db(**kwargs):
     con = sqlite3.connect("articles.db")
@@ -37,10 +41,11 @@ def connect_db(**kwargs):
     create_table(con, cursor)
     return con, cursor
 
+
 # Create table to store articles
 def create_table(con, cursor):
     sql_create_tasks_table = """CREATE TABLE IF NOT EXISTS article (
-                                            item_id integer PRIMARY KEY,
+                                            item_id integer PRIMARY KEY AUTOINCREMENT,
                                             url text NULL,
                                             article_date text NOT NULL,
                                             labels text NOT NULL,
@@ -62,7 +67,6 @@ class BlogSpider(scrapy.Spider):
                   'https://nbs.sk/en/news/statement-from-the-nbs-bank-boards-17th-meeting-of-2022/',
                   'https://nbs.sk/en/news/statement-from-the-nbs-bank-boards-18th-meeting-of-2022%ef%bf%bc/',
                   'https://nbs.sk/en/news/statement-from-the-nbs-bank-boards-16th-meeting-of-2022/',
-                  'https://nbs.sk/en/news/nbs-warning-about-axe-capital-group-se/',
                   'https://nbs.sk/en/news/nbs-warning-about-feb-bank/',
                   'https://nbs.sk/en/news/statement-from-the-nbs-bank-boards-12th-meeting-of-2022/',
                   'https://nbs.sk/en/news/statement-from-the-nbs-bank-boards-9th-meeting-of-2022/',
@@ -77,7 +81,8 @@ class BlogSpider(scrapy.Spider):
                   'https://nbs.sk/en/news/nbs-announces-temporary-closure-of-public-counters-and-filing-office/',
                   'https://nbs.sk/en/news/nbs-launches-research-archive-portal/',
                   'https://nbs.sk/en/news/notice-of-the-commencement-of-winding-up-proceedings-against-lamp-insurance-company-limited/',
-                  'https://nbs.sk/en/news/nbs-warning-what-is-a-pyramid-scheme-airplane-game-or-ponzi-scheme/'
+                  'https://nbs.sk/en/news/nbs-warning-what-is-a-pyramid-scheme-airplane-game-or-ponzi-scheme/',
+                  'https://nbs.sk/en/news/the-european-systemic-risk-board-issues-a-warning-to-slovakia-on-vulnerabilities-in-the-residential-real-estate-sector/'
                   ]
 
     article_id: int = 0
@@ -98,7 +103,6 @@ class BlogSpider(scrapy.Spider):
         self.article_id = self.article_id + 1
 
         schema = {
-            "item_id": self.article_id,
             "url": self.start_urls[self.article_id - 1],
             "article_date": date,
             "labels": str(article_labels),
@@ -106,9 +110,17 @@ class BlogSpider(scrapy.Spider):
             "body": paragraphs
         }
         try:
-            self.cursor.execute(
-                "INSERT INTO article (item_id, url, article_date, labels, links, body) VALUES (:item_id, :url, :article_date, :labels, :links, :body)",
-                schema)
-            self.con.commit()
-        except:
-            print("No duplicates allowed")
+            # Checks if a new article's body matches the body of an existing article in the db
+
+            sql_check_duplicates = f" SELECT * FROM article WHERE body = '{paragraphs}'"
+            self.cursor.execute(sql_check_duplicates)
+            result = self.cursor.fetchone()
+            if not result:
+                self.cursor.execute(
+                    "INSERT INTO article (url, article_date, labels, links, body) VALUES (:url, :article_date, :labels, :links, :body)",
+                    schema)
+                self.con.commit()
+            else:
+                print("Duplicate are not allowed")
+        except Exception as e:
+            print(e)
