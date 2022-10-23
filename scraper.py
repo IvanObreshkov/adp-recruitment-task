@@ -41,11 +41,11 @@ def connect_db(**kwargs):
 def create_table(con, cursor):
     sql_create_tasks_table = """CREATE TABLE IF NOT EXISTS article (
                                             item_id integer PRIMARY KEY,
-                                            url text unique NULL,
-                                            article_date text unique NOT NULL,
-                                            labels text unique NOT NULL,
-                                            links text integer unique  NOT NULL,
-                                            body TEXT unique NOT NULL
+                                            url text NULL,
+                                            article_date text NOT NULL,
+                                            labels text NOT NULL,
+                                            links text integer NOT NULL,
+                                            body TEXT NOT NULL
                                         );"""
 
     try:

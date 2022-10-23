@@ -1,6 +1,9 @@
 #idea folder
 .idea
 
+# generated db
+articles.db
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
