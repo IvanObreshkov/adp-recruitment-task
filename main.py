@@ -7,10 +7,13 @@ import sqlite3
 import json
 
 app = FastAPI()
+
+# Generates update query for put request
 def generateUpdateQuery(json_data, article_id):
     sql_query_start = "UPDATE article SET"
     sql_query_end = f" WHERE item_id = {article_id}"
 
+    # Adds values to query from put request
     for key, value in json_data.items():
         if isinstance(value, (list,)):
             value_to_str = str(value).replace("'", "")
@@ -91,7 +94,7 @@ def delete_article(article_id):
     con.commit()
     return JSONResponse(content=jsonable_encoder({"message": "article deleted successfully"}))
 
-
+# Update article info by article_id
 @app.put("/article/{article_id}")
 async def update_article(article_id, request: Request):
     json_data = await request.json()
