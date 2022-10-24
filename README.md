@@ -31,7 +31,3 @@ cd adp-recruitment-task && scrapy runspider scraper.py
 ```bash
 cd adp-recruitment-task && uvicorn main:app --reload
 ```
-
-```bash
-cd adp-recruitment-task && scrapy runspider scraper.py
-```
