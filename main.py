@@ -97,6 +97,11 @@ def delete_article(article_id):
 # Update article info by article_id
 @app.put("/article/{article_id}")
 async def update_article(article_id, request: Request):
+    con, cursor = connect_db(row=True)
+    cursor.execute(f"SELECT * FROM article WHERE item_id = {article_id}")
+    result = cursor.fetchone()
+    if not result:
+        return JSONResponse(status_code=404, content=jsonable_encoder({"message": "Such article could not be found!"}))
     json_data = await request.json()
     SCHEMA = {
         'properties': {
