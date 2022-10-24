@@ -18,6 +18,7 @@ def generateUpdateQuery(json_data, article_id):
         if isinstance(value, (list,)):
             value_to_str = str(value).replace("'", "")
             sql_query_start += f" {key} = '{value_to_str}',"
+
         else:
             sql_query_start += f" {key} = '{value}',"
 
@@ -38,7 +39,7 @@ def get_all_articles():
     SELECT * FROM article
     """
 
-    _, cursor = connect_db(row=True)
+    _, cursor = connect_db()
     cursor.execute(sql_query)
     result = cursor.fetchall()
 
@@ -49,7 +50,7 @@ def get_all_articles():
 @app.get("/articles/")
 def get_all_with_label(label: str):
     sql_query = f"SELECT * FROM article WHERE labels LIKE '%{label}%'"
-    _, cursor = connect_db(row=True)
+    _, cursor = connect_db()
     cursor.execute(sql_query)
     result = cursor.fetchall()
     if not result:
@@ -61,7 +62,7 @@ def get_all_with_label(label: str):
 @app.get("/article/")
 def get_article_with_date(date: str):
     sql_query = f"SELECT * FROM article WHERE article_date LIKE '%{date}%'"
-    _, cursor = connect_db(row=True)
+    _, cursor = connect_db()
     cursor.execute(sql_query)
     result = cursor.fetchall()
     if not result:
@@ -73,7 +74,7 @@ def get_article_with_date(date: str):
 @app.get("/article/{article_id}")
 def get_article(article_id: int):
     sql_query = f"SELECT * FROM article WHERE item_id = {article_id}"
-    con, cursor = connect_db(row=True)
+    con, cursor = connect_db()
     cursor.execute(sql_query)
     result = cursor.fetchone()
     if not result:
@@ -84,7 +85,7 @@ def get_article(article_id: int):
 # Delete article by id
 @app.delete("/article/{article_id}")
 def delete_article(article_id):
-    con, cursor = connect_db(row=True)
+    con, cursor = connect_db()
     cursor.execute(f"SELECT * FROM article WHERE item_id = {article_id}")
     result = cursor.fetchone()
     if not result:
@@ -97,7 +98,7 @@ def delete_article(article_id):
 # Update article info by article_id
 @app.put("/article/{article_id}")
 async def update_article(article_id, request: Request):
-    con, cursor = connect_db(row=True)
+    con, cursor = connect_db()
     cursor.execute(f"SELECT * FROM article WHERE item_id = {article_id}")
     result = cursor.fetchone()
     if not result:

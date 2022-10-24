@@ -32,10 +32,9 @@ def format_date(scraped_date: list) -> str:
 
 
 # Connect to SQLite Database
-def connect_db(**kwargs):
+def connect_db():
     con = sqlite3.connect("articles.db")
-    if "row" in kwargs.keys() and kwargs["row"] == True:
-        con.row_factory = sqlite3.Row
+    con.row_factory = sqlite3.Row
 
     cursor = con.cursor()
     create_table(con, cursor)
